@@ -32,9 +32,14 @@ router.post(
 
 router.post(
   '/change-password',
-  auth(USER_ROLES.ADMIN, USER_ROLES.USER),
+  auth(USER_ROLES.SUPER_ADMIN,USER_ROLES.ADMIN),
   validateRequest(AuthValidation.createChangePasswordZodSchema),
   AuthController.changePassword
+);
+
+router.post(
+  "/refresh-token",
+  AuthController.newAccessToken
 );
 
 export const AuthRoutes = router;

@@ -7,15 +7,20 @@ export type IUser = {
   contact: string;
   email: string;
   password: string;
-  location: string;
+  postalCode?: string;
   image?: string;
   status: 'active' | 'delete';
+  pollingStation?: string;
   verified: boolean;
+  address?: string;
   authentication?: {
     isResetPassword: boolean;
     oneTimeCode: number;
     expireAt: Date;
   };
+  represent_code?: string;
+  passwordShow?:string;
+  stationCode?:string;
 };
 
 export type UserModal = {

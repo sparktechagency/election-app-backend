@@ -19,10 +19,13 @@ import { User } from '../user/user.model';
 
 //login
 const loginUserFromDB = async (payload: ILoginData) => {
-  const { email, password } = payload;
-  const isExistUser = await User.findOne({ email }).select('+password');
+  const { email, password,code } = payload;
+  let isExistUser = await User.findOne({ email }).select('+password');
   if (!isExistUser) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
+    isExistUser = await User.findOne({represent_code:code }).select('+password');
+    if (!isExistUser) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'User does not exist');
+    }
   }
 
   //check verified and status
@@ -55,9 +58,42 @@ const loginUserFromDB = async (payload: ILoginData) => {
     config.jwt.jwt_secret as Secret,
     config.jwt.jwt_expire_in as string
   );
+      const refreshToken = jwtHelper.createToken(
+        { id: isExistUser._id, role: isExistUser.role, email: isExistUser.email },
+        config.jwt.jwt_secret as Secret,
+        config.jwt.jwt_expire_in as string
+    );
 
-  return { createToken };
+  return { createToken,refreshToken};
 };
+
+const newAccessTokenToUser = async (token: string) => {
+
+    // Check if the token is provided
+    if (!token) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'Token is required!');
+    }
+
+    const verifyUser = jwtHelper.verifyToken(
+        token,
+        config.jwt.jwt_expire_in as Secret
+    );
+
+    const isExistUser = await User.findById(verifyUser?.id);
+    if (!isExistUser) {
+        throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized access")
+    }
+
+    //create token
+    const accessToken = jwtHelper.createToken(
+        { id: isExistUser._id, role: isExistUser.role, email: isExistUser.email },
+        config.jwt.jwt_secret as Secret,
+        config.jwt.jwt_expire_in as string
+    );
+
+    return { accessToken }
+}
+
 
 //forget password
 const forgetPasswordToDB = async (email: string) => {
@@ -253,4 +289,5 @@ export const AuthService = {
   forgetPasswordToDB,
   resetPasswordToDB,
   changePasswordToDB,
+  newAccessTokenToUser
 };

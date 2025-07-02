@@ -38,6 +38,43 @@ const resetPassword = (values: IResetPassword) => {
   return data;
 };
 
+export const createAgent = (values:{email:string,name:string,password:string,code:string}) => {
+  const data = {
+    to: values.email,
+    subject: 'Conngratulations! Your account has been created',
+    html: `  <body style="font-family: Arial, sans-serif; background-color: #f2fdf6; padding: 20px; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.05); padding: 30px;">
+      
+      <h2 style="color: #107e54; text-align: center;">Welcome to CRM Election System</h2>
+      
+      <p>Dear <strong>${values.name}</strong>,</p>
+
+      <p>Your account has been successfully created as an agent in the CRM election platform.</p>
+
+      <p>Please find your login details below:</p>
+
+      <div style="background-color: #e6f7ef; padding: 15px; border-left: 4px solid #107e54; margin-bottom: 20px;">
+        <p><strong>Email:</strong> ${values.email}</p>
+        <p><strong>Code:</strong> ${values.code}</p>
+        <p><strong>Password:</strong> ${values.password}</p>
+      </div>
+
+      <p>We recommend changing your password after logging in for the first time.</p>
+
+      <p>If you have any issues, feel free to contact the admin.</p>
+
+      <p style="margin-top: 40px;">Best regards,<br/>CRM Election Team</p>
+
+      <hr style="margin: 40px 0; border: none; border-top: 1px solid #ddd;" />
+
+      <p style="font-size: 12px; text-align: center; color: #888;">&copy; 2025 CRM Election System. All rights reserved.</p>
+
+    </div>
+  </body>`,
+  }
+  return data;
+}
+
 export const emailTemplate = {
   createAccount,
   resetPassword,

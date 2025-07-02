@@ -5,6 +5,7 @@ import config from '../../../config';
 import { USER_ROLES } from '../../../enums/user';
 import ApiError from '../../../errors/ApiError';
 import { IUser, UserModal } from './user.interface';
+import { getRandomId } from '../../../shared/idGenerator';
 
 const userSchema = new Schema<IUser, UserModal>(
   {
@@ -25,9 +26,8 @@ const userSchema = new Schema<IUser, UserModal>(
     },
     password: {
       type: String,
-      required: true,
+      required: false,
       select: 0,
-      minlength: 8,
     },
     image: {
       type: String,
@@ -59,6 +59,34 @@ const userSchema = new Schema<IUser, UserModal>(
       },
       select: 0,
     },
+    contact: {
+      type: String,
+      required: false,
+    },
+    pollingStation: {
+      type: String,
+      required: false,
+    },
+    postalCode: {
+      type: String,
+      required: false,
+    },
+    address: {
+      type: String,
+      required: false,
+    },
+    represent_code: {
+      type: String,
+      required: false,
+    },
+    passwordShow: {
+      type: String,
+      select: 0,
+    },
+    stationCode: {
+      type: String,
+      required: false,
+    }
   },
   { timestamps: true }
 );
@@ -89,6 +117,12 @@ userSchema.pre('save', async function (next) {
   if (isExist) {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Email already exist!');
   }
+
+  if(this.role == USER_ROLES.AGENT){
+    this.represent_code = getRandomId('AG',5,'number')
+  }
+
+
 
   //password hash
   this.password = await bcrypt.hash(

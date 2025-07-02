@@ -24,7 +24,7 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
     success: true,
     statusCode: StatusCodes.OK,
     message: 'User logged in successfully.',
-    data: result.createToken,
+    data: result,
   });
 });
 
@@ -66,10 +66,23 @@ const changePassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const newAccessToken = catchAsync(async (req: Request, res: Response) => {
+    const { token } = req.body;
+    const result = await AuthService.newAccessTokenToUser(token);
+
+    sendResponse(res, {
+        success: true,
+        statusCode: StatusCodes.OK,
+        message: 'Generate Access Token successfully',
+        data: result
+    });
+});
+
 export const AuthController = {
   verifyEmail,
   loginUser,
   forgetPassword,
   resetPassword,
   changePassword,
+  newAccessToken
 };
