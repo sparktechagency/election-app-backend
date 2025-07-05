@@ -14,6 +14,11 @@ import { Polling } from '../polling/polling.model';
 import path from 'path';
 import { POLLING_STATUS } from '../../../enums/polling';
 import ApiError from '../../../errors/ApiError';
+import vison from "@google-cloud/vision"
+const keyPath = path.join(process.cwd(), 'keys','crm.json');
+const visionClient = new vison.ImageAnnotatorClient({
+  keyFilename: keyPath,
+});
 const createDocumentIntoDB = async (user: JwtPayload, payload: IDocument) => {
   const userData = await User.findOne({ _id: user.id }).lean();
 
@@ -162,6 +167,9 @@ const getSingleDocument = async (id: string) => {
 
 const scanDocuments = async (filePath: string, documentId: string) => {
   const newFilePath = path.join(process.cwd(), 'uploads', filePath);
+  const data = await visionClient.textDetection(newFilePath);
+  const text = data[0]?.fullTextAnnotation?.text;
+ 
   const document = await Document.findById(documentId);
   if (!document) {
     throw new ApiError(404,'Document not found');
@@ -170,12 +178,12 @@ const scanDocuments = async (filePath: string, documentId: string) => {
     throw new ApiError(400,'Document already scanned');
   }
   await Polling.deleteMany({ image: filePath,status:POLLING_STATUS.PENDING });
-  const { data } = await Tesseract.recognize(newFilePath, 'eng');
-  const text = data.text;
-  const formattedText = text.replace(/\n/g, ' ');
-console.log(formattedText);
+//   const { data } = await Tesseract.recognize(newFilePath, 'eng');
+//   const text = data.text;
+  const formattedText = text?.replace(/\n/g, ' ');
+// console.log(formattedText);
 
-  const response: CandidateVote[] = await getVotesFromText(formattedText);
+  const response: CandidateVote[] = await getVotesFromText(formattedText??"");
 
   const polling = await Polling.create({
     station: document.station,

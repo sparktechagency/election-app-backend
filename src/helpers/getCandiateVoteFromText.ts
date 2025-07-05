@@ -7,7 +7,7 @@ const model = googleGenerativeAI.getGenerativeModel({
 });
 export async function getVotesFromText(text: string) {
   const teams = (await Team.find({}, { name: 1, _id: 1}))
-  console.log(teams);
+//   console.log(teams);
   
 
   const prompt = `This is a list of teams in the election: ${teams}. and there is the content where is the votes descreption: ${text}. 
@@ -16,7 +16,7 @@ export async function getVotesFromText(text: string) {
   const response = await model.generateContent(prompt);
 
   const textData = response.response.text()
-  console.log(textData);
+//   console.log(textData);
   
 
   // Remove any code block formatting
