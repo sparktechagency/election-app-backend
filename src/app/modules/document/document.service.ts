@@ -167,8 +167,13 @@ const getSingleDocument = async (id: string) => {
 
 const scanDocuments = async (filePath: string, documentId: string) => {
   const newFilePath = path.join(process.cwd(), 'uploads', filePath);
+  const ExistPolling = await Polling.findOne({ image: filePath,status:POLLING_STATUS.PUBLISHED });
+  if(ExistPolling){
+    throw new ApiError(400,'Polling already exist');
+  }
   const data = await visionClient.textDetection(newFilePath);
   const text = data[0]?.fullTextAnnotation?.text;
+
  
   const document = await Document.findById(documentId);
   if (!document) {
