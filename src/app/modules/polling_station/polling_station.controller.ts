@@ -71,10 +71,25 @@ const getPollingStations = catchAsync(async (req: Request, res: Response) => {
 });
 
 
+const getPollingStationsForAdmin = catchAsync(async (req: Request, res: Response) => {
+  const query = req.query;
+  const result = await PollingStationService.pollingStationsFromAddingInAdmin(query);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "Polling Station fetched successfully",
+    data: result.data,
+    pagination: result.pagination,
+  });
+})
+
+
+
 export const PollingStationController = {
     createPollingStationByExcelSheet,
     createPollingStation,
     updatePollingStation,
     deletePollingStation,
     getPollingStations,
+    getPollingStationsForAdmin
 }

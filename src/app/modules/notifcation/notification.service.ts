@@ -1,7 +1,7 @@
 import { JwtPayload } from "jsonwebtoken"
 import QueryBuilder from "../../builder/QueryBuilder"
 import { Notification } from "./notification.model"
-import { Types } from "mongoose"
+import mongoose, { Types } from "mongoose"
 
 const getALLNotification = async (query:Record<string,any>,user:JwtPayload)=>{
   const notificationQuery = new QueryBuilder(Notification.find({recievers:{
@@ -11,7 +11,13 @@ const getALLNotification = async (query:Record<string,any>,user:JwtPayload)=>{
     notificationQuery.modelQuery.lean(),
     notificationQuery.getPaginationInfo()
   ])
-  const unread = await Notification.countDocuments({readers:{$nin:[user.id]}})
+const unread = await Notification.countDocuments({
+  recievers:{
+    $in:[user.id]
+  },
+  readers: { $nin: [new mongoose.Types.ObjectId(user.id)] }
+});
+
   return {data:{
     notifications:notifications.map((item:any)=>{
         
@@ -21,7 +27,7 @@ const getALLNotification = async (query:Record<string,any>,user:JwtPayload)=>{
         }
       
     }),
-    unread
+    unread:unread
   },pagination}
 }
 
@@ -34,7 +40,17 @@ const readAllNotification = async (user:JwtPayload)=>{
   return notification
 }
 
+const readOneNotification = async (user:JwtPayload,id:string)=>{
+  const notification = await Notification.updateOne({_id:id,recievers:{
+    $in:[user.id]
+  },readers:{$nin:[user.id]}},{
+    $addToSet:{readers:user.id}
+  })
+  return notification
+}
+
 export const NotificationService = {
   getALLNotification,
-  readAllNotification
+  readAllNotification,
+  readOneNotification
 }

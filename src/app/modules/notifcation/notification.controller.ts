@@ -28,8 +28,21 @@ const readAllNotification = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const readOneNotification = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user;
+  const { id } = req.params;
+  const result = await NotificationService.readOneNotification(user, id);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Notification read successfully',
+    data: result,
+  });
+});
+
 
 export const NotificationController = {
   getALLNotification,
   readAllNotification,
+  readOneNotification,
 };

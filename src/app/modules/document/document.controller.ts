@@ -26,7 +26,8 @@ const getAllDocuments = catchAsync(async (req: Request, res: Response) => {
     statusCode: StatusCodes.OK,
     success: true,
     message: 'Documents fetched successfully',
-    data: result,
+    data: result.data,
+    pagination:result.paginationInfo
   });
 });
 const getSingleDocument = catchAsync(async (req: Request, res: Response) => {
@@ -63,10 +64,45 @@ const publishDocuments = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+const getPollingBySMS = catchAsync(async (req: Request, res: Response) => {
+  const { text } = req.body;
+  const result = await DocumentService.makePollingBySMS(text);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Polling fetched successfully',
+    data: result,
+  });
+});
+
+const getDocumetForAgent = catchAsync(async (req: Request, res: Response) => {
+  const result = await DocumentService.getAllDocumentsForAgent(req.user,req.query);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Document fetched successfully',
+    data: result.documents,
+    pagination:result.pagination
+  });
+});
+
+const updateDocument = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const result = await DocumentService.updateDocumentFromBD(id, req.body);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: 'Document updated successfully',
+    data: result,
+  });
+});
 export const DocumentController = {
   createDocument,
   getAllDocuments,
   getSingleDocument,
   scanDocuments,
   publishDocuments,
+  getPollingBySMS,
+  getDocumetForAgent,
+  updateDocument,
 };

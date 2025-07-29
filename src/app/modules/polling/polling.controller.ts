@@ -39,9 +39,22 @@ const getPollingSummery = catchAsync(async (req:Request, res:Response) => {
   });
 })
 
+const updatePolling = catchAsync(async (req:Request, res:Response) => {
+  const { id } = req.params;
+  const updateData = req.body;
+  const result = await PollingService.updatePolling(id, updateData);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "polling data updated",
+    data: result,
+  });
+})
+
 export const PollingController = {
   pendindDocuments,
   getPollingInfo,
-  getPollingSummery
+  getPollingSummery,
+  updatePolling
 };
 

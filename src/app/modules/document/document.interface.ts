@@ -24,5 +24,14 @@ export interface CandidateVote {
   votesInWords: string;
 }
 
+interface AgentAndStationDetails {
+  stationId: string;
+  agentId: string;
+}
+
+export interface ElectionResult {
+  agentAndStationDetails: AgentAndStationDetails;
+  votes: CandidateVote[];
+}
 
 export type DocumentModal = Model<IDocument>

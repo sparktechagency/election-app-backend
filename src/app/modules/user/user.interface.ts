@@ -1,4 +1,4 @@
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { USER_ROLES } from '../../../enums/user';
 
 export type IUser = {
@@ -18,9 +18,15 @@ export type IUser = {
     oneTimeCode: number;
     expireAt: Date;
   };
+  gender: 'male' | 'female'|"";
+  dob: Date;  
   represent_code?: string;
   passwordShow?:string;
   stationCode?:string;
+  country?:string;
+  occupation?:string;
+  stations?:Types.ObjectId[]
+
 };
 
 export type UserModal = {

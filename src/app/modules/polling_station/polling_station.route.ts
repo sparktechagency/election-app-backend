@@ -10,6 +10,7 @@ router.route("/")
     .post(validateRequest(PollingStationValidation.createPollingStationZodSchema),PollingStationController.createPollingStation)
     .get(PollingStationController.getPollingStations)
 
+router.get("/for-admin",PollingStationController.getPollingStationsForAdmin)
 router.route("/:id")
     .patch(validateRequest(PollingStationValidation.updatePollingStationZodSchema),PollingStationController.updatePollingStation)
     .delete(PollingStationController.deletePollingStation)

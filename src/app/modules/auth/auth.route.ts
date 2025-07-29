@@ -42,4 +42,15 @@ router.post(
   AuthController.newAccessToken
 );
 
+router.post(
+  "/change-password-application",
+  AuthController.changePasswordApplication
+);
+
+router.post(
+  "/change-password-token",
+  auth(USER_ROLES.AGENT),
+  AuthController.changePasswordApplicationWithToken
+);
+
 export const AuthRoutes = router;

@@ -4,6 +4,7 @@ import { StatusCodes } from 'http-status-codes';
 import globalErrorHandler from './app/middlewares/globalErrorHandler';
 import router from './routes';
 import { Morgan } from './shared/morgen';
+import { TwiloWebhookHandler } from './webhook/twiloWebhookHandler';
 const app = express();
 
 //morgan
@@ -11,7 +12,10 @@ app.use(Morgan.successHandler);
 app.use(Morgan.errorHandler);
 
 //body parser
-app.use(cors());
+app.use(cors({
+  origin:["http://10.10.7.95:3000","http://localhost:3000","http://10.10.7.95:3000","https://election-app-omega.vercel.app","https://year3000.binarybards.online"],
+  credentials:true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -21,6 +25,7 @@ app.use(express.static('uploads'));
 //router
 app.use('/api/v1', router);
 
+app.post("/api/twilo/webhook",TwiloWebhookHandler)
 //live response
 app.get('/', (req: Request, res: Response) => {
   const date = new Date(Date.now());

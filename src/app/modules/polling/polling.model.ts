@@ -16,11 +16,11 @@ const pollinShcema = new Schema<IPolling,PollingModal>({
   document: {
     type: Schema.Types.ObjectId,
     ref: 'Document',
-    required: true,
+    required: false,
   },
   image: {
     type: String,
-    required: true,
+    required: false,
   },
   status:{
     type: String,

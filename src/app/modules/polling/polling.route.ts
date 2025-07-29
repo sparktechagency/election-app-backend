@@ -11,6 +11,7 @@ router.route('/summury')
   .get(auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), PollingController.getPollingSummery);
 
 router.route('/:id')
-  .get(auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), PollingController.pendindDocuments);
+  .get(auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), PollingController.pendindDocuments)
+  .patch(auth(USER_ROLES.ADMIN, USER_ROLES.SUPER_ADMIN), PollingController.updatePolling);
 
 export const PollingRoutes = router;

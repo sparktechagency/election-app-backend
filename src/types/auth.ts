@@ -7,6 +7,7 @@ export type ILoginData = {
   email: string;
   password: string;
   code?: string;
+  stationCode?: string;
 };
 
 export type IAuthResetPassword = {

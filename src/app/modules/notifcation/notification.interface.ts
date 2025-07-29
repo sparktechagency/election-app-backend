@@ -5,6 +5,8 @@ export type INotification = {
   message: string;
   recievers:Types.ObjectId[];
   readers?: Types.ObjectId[];
+  path:"polling"|"agent"
+  refernceId?:Types.ObjectId;
 };
 
 export type NotificationModel = Model<INotification>;

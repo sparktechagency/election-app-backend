@@ -6,6 +6,8 @@ import sendResponse from "../../../shared/sendResponse";
 const sendMessage = catchAsync(async (req: Request, res: Response) => {
   const user = req.user;
   const { message, recievers } = req.body;
+  // console.log(message, recievers);
+  
   const result = await MessageService.sendMessageToDB(user, message, recievers);
   sendResponse(res, {
     success: true,

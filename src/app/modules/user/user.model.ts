@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { StatusCodes } from 'http-status-codes';
-import { model, Schema } from 'mongoose';
+import mongoose, { model, Schema } from 'mongoose';
 import config from '../../../config';
 import { USER_ROLES } from '../../../enums/user';
 import ApiError from '../../../errors/ApiError';
@@ -86,7 +86,31 @@ const userSchema = new Schema<IUser, UserModal>(
     stationCode: {
       type: String,
       required: false,
-    }
+    },
+    gender: {
+      type: String,
+      enum: ['male', 'female',""],
+      required: false,
+      default:''
+    },
+    dob: {
+      type: Date,
+      required: false,
+    },
+    occupation: {
+      type: String,
+      required: false,
+    },
+    country: {
+      type: String,
+      required: false,
+    },
+    stations:[
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'PollingStation',
+      }
+    ]
   },
   { timestamps: true }
 );

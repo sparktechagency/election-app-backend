@@ -15,13 +15,14 @@ import { unlinkSync } from 'fs';
 import { IChangePassword } from '../../../types/auth';
 import { compare, hash } from 'bcrypt';
 import config from '../../../config';
+import { PollingStation } from '../polling_station/polling_station.model';
 
-const createUserToDB = async (payload: Partial<IUser>): Promise<IUser> => {
-  if (!payload.password){
-  payload.password = crypto.randomBytes(4).toString('hex');
-  payload.passwordShow = payload.password;
+const createUserToDB = async (payload: Partial<IUser>) => {
+  if (!payload.password) {
+    payload.password = crypto.randomBytes(4).toString('hex');
+    payload.passwordShow = payload.password;
   }
-  payload.verified = true
+  payload.verified = true;
   const createUser = await User.create(payload);
   if (!createUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Failed to create user');
@@ -38,16 +39,20 @@ const createUserToDB = async (payload: Partial<IUser>): Promise<IUser> => {
   return createUser;
 };
 
-const getUserProfileFromDB = async (
-  user: JwtPayload
-): Promise<Partial<IUser>> => {
+const getUserProfileFromDB = async (user: JwtPayload) => {
   const { id } = user;
-  const isExistUser = await User.isExistUserById(id);
+  const isExistUser = await User.findOne({ _id: id }).lean();
   if (!isExistUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }
 
-  return isExistUser;
+  const station = await PollingStation.findOne({
+    stationCode: isExistUser.stationCode,
+  }).lean();
+  return {
+    ...isExistUser,
+    pollingAddress: `${station?.name}, ${station?.city}, ${station?.commune}, ${station?.region}`,
+  };
 };
 
 const updateProfileToDB = async (
@@ -56,12 +61,13 @@ const updateProfileToDB = async (
 ): Promise<Partial<IUser | null>> => {
   const { id } = user;
   const isExistUser = await User.isExistUserById(id);
+
   if (!isExistUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }
 
   //unlink file here
-  if (payload.image) {
+  if (payload.image && isExistUser.image) {
     unlinkFile(isExistUser.image);
   }
 
@@ -72,78 +78,113 @@ const updateProfileToDB = async (
   return updateDoc;
 };
 
-const createAgentsByExcelSheet = async (filePath:string)=>{
-    const workbook = xlsx.readFile(filePath);
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const data = xlsx.utils.sheet_to_json(sheet);
-      const formatData = data.map((item:any) => ({
-        name:item['Name'],
-        email:item['Email'],
-        contact:item['Contact No'],
-        role:USER_ROLES.AGENT,
-        postalCode:item['Post Code'],
-        pollingStation:item['Pooling Address'],
-      }));
+const createAgentsByExcelSheet = async (filePath: string) => {
+  const workbook = xlsx.readFile(filePath);
+  const sheetName = workbook.SheetNames[0];
+  const sheet = workbook.Sheets[sheetName];
+  const data = xlsx.utils.sheet_to_json(sheet);
+  const formatData = data.map((item: any) => ({
+    name: item['Name'],
+    email: item['Email'],
+    contact: item['Contact No'],
+    role: USER_ROLES.AGENT,
+    postalCode: item['Post Code'],
+    pollingStation: item['Pooling Address'],
+  }));
 
-      const BATCH_SIZE = 100;
-      for (let i = 0; i < formatData.length; i += BATCH_SIZE) {
-        const batch = formatData.slice(i, i + BATCH_SIZE);
-        for (const agent of batch) {
-          const exist = await User.findOne({ email: agent.email });
-          if (!exist) {
-            const createUser = await createUserToDB(agent);
-            if (!createUser) {
-              throw new ApiError(StatusCodes.BAD_REQUEST, 'Failed to create user');
-            }
-          }
+  const BATCH_SIZE = 100;
+  for (let i = 0; i < formatData.length; i += BATCH_SIZE) {
+    const batch = formatData.slice(i, i + BATCH_SIZE);
+    for (const agent of batch) {
+      const exist = await User.findOne({ email: agent.email });
+      if (!exist) {
+        const createUser = await createUserToDB(agent);
+        if (!createUser) {
+          throw new ApiError(StatusCodes.BAD_REQUEST, 'Failed to create user');
         }
       }
+    }
+  }
 
-      unlinkSync(filePath);
+  unlinkSync(filePath);
 
-      return "agents created successfully"
-      
-}
+  return 'agents created successfully';
+};
 
-
-const userListData = async (query:Record<string,any>)=>{
-  const AgentQuery = new QueryBuilder(User.find({}),query).paginate().sort().search(['name','email','contact','postalCode','pollingStation','represent_code']).filter()
-  const [agens,pagination]= await Promise.all([
+const userListData = async (query: Record<string, any>) => {
+  const AgentQuery = new QueryBuilder(User.find({}), query)
+    .paginate()
+    .sort()
+    .search([
+      'name',
+      'email',
+      'contact',
+      'postalCode',
+      'pollingStation',
+      'represent_code',
+    ])
+    .filter();
+  const [agens, pagination] = await Promise.all([
     AgentQuery.modelQuery.lean(),
-    AgentQuery.getPaginationInfo()
-  ])
-  return {agens,pagination}
-}
+    AgentQuery.getPaginationInfo(),
+  ]);
+  let data = agens as any[];
+  if (query?.role == USER_ROLES.ADMIN) {
+    data = await Promise.all(
+      agens.map(async (agent: any) => {
+        const stations = agent?.stations?.length
+          ? await Promise.all(
+              (agent as any as IUser)?.stations?.map(async station => {
+                const stationData = await PollingStation.findById(station);
+                return {
+                  id: stationData?._id,
+                  name: stationData?.name,
+                };
+              }) as any
+            )
+          : [];
+        return {
+          ...agent,
+          stations: stations,
+        };
+      })
+    );
+  }
+  return { agens: data, pagination };
+};
 
-const updateUserData = async (id:string,payload:Partial<IUser>)=>{
+const updateUserData = async (id: string, payload: Partial<IUser>) => {
   const isExistUser = await User.isExistUserById(id);
   if (!isExistUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }
-  if(payload.image){
+  if (payload.image) {
     unlinkFile(isExistUser.image);
   }
   const updateDoc = await User.findOneAndUpdate({ _id: id }, payload, {
     new: true,
   });
   return updateDoc;
-}
+};
 
-const lockUnlockUser = async (id:string)=>{
+const lockUnlockUser = async (id: string) => {
   const isExistUser = await User.isExistUserById(id);
   if (!isExistUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }
-  const updateDoc = await User.findOneAndUpdate({ _id: id }, {
-    status: isExistUser.status === 'active' ? 'delete' : 'active'
-  }, {
-    new: true,
-  });
+  const updateDoc = await User.findOneAndUpdate(
+    { _id: id },
+    {
+      status: isExistUser.status === 'active' ? 'delete' : 'active',
+    },
+    {
+      new: true,
+    }
+  );
   return updateDoc;
-}
+};
 
-const deleteUser = async (id:string)=>{
+const deleteUser = async (id: string) => {
   const isExistUser = await User.isExistUserById(id);
   if (!isExistUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
@@ -151,10 +192,15 @@ const deleteUser = async (id:string)=>{
   unlinkFile(isExistUser.image);
   const deleteDoc = await User.findOneAndDelete({ _id: id });
   return deleteDoc;
-}
+};
 
-const changeAgentPassword = async (id:string,payload:Partial<IChangePassword>)=>{
-  const isExistUser = await User.findOne({_id:id}).select('+password').lean()
+const changeAgentPassword = async (
+  id: string,
+  payload: Partial<IChangePassword>
+) => {
+  const isExistUser = await User.findOne({ _id: id })
+    .select('+password')
+    .lean();
   if (!isExistUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }
@@ -165,24 +211,48 @@ const changeAgentPassword = async (id:string,payload:Partial<IChangePassword>)=>
     throw new ApiError(StatusCodes.BAD_REQUEST, 'Password is incorrect');
   }
 
-  const hashPassword = await hash(payload.newPassword!, config.bcrypt_salt_rounds!);
-  const updateDoc = await User.findOneAndUpdate({ _id: id }, {
-    password: hashPassword,
-    passwordShow: payload.newPassword
-  }, {
-    new: true,
-  });
+  const hashPassword = await hash(
+    payload.newPassword!,
+    Number(config.bcrypt_salt_rounds) || 10
+  );
+  const updateDoc = await User.findOneAndUpdate(
+    { _id: id },
+    {
+      password: hashPassword,
+      passwordShow: payload.newPassword,
+    },
+    {
+      new: true,
+    }
+  );
   return updateDoc;
-  
-}
+};
 
-const getUserData = async (id:string)=>{
-  const isExistUser = await User.findOne({_id:id}).select('+passwordShow').lean()
+const getUserData = async (id: string) => {
+  const isExistUser = await User.findOne({ _id: id })
+    .select('+passwordShow')
+    .lean();
   if (!isExistUser) {
     throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
   }
   return isExistUser;
-}
+};
+
+const addStationInAdmins = async (id: string, stationIds: string[]) => {
+  const isExistUser = await User.findOne({ _id: id }).lean();
+  if (!isExistUser) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!");
+  }
+  const updateDoc = await User.findOneAndUpdate(
+    { _id: id },
+    {
+      stations: stationIds,
+    },
+    { new: true }
+  );
+
+  return updateDoc;
+};
 
 export const UserService = {
   createUserToDB,
@@ -194,5 +264,6 @@ export const UserService = {
   lockUnlockUser,
   deleteUser,
   changeAgentPassword,
-  getUserData
+  getUserData,
+  addStationInAdmins,
 };

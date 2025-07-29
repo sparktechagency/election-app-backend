@@ -45,7 +45,7 @@ const deletePollingStation = async(id:string)=>{
 }
 
 const getPollingStations = async(query:Record<string,any>)=>{
-    const StationQuery = new QueryBuilder(PollingStation.find(),query).paginate().sort().search(["country","region","department","commune","city","name",'stationCode'])
+    const StationQuery = new QueryBuilder(PollingStation.find(),query).sort().paginate().search(["country","region","department","commune","city","name",'stationCode'])
     const [data,pagination]= await Promise.all([
         StationQuery.modelQuery.lean(),
         StationQuery.getPaginationInfo()
@@ -55,10 +55,26 @@ const getPollingStations = async(query:Record<string,any>)=>{
         pagination
     }
 }
+
+const pollingStationsFromAddingInAdmin = async(query:Record<string,any>)=>{
+    const StationQuery = new QueryBuilder(PollingStation.find(),query).sort().paginate().search(["country","region","department","commune","city","name",'stationCode'])
+    const [data,pagination]= await Promise.all([
+        StationQuery.modelQuery.lean(),
+        StationQuery.getPaginationInfo()
+    ])
+    return {
+        data:data.map((item:any)=>({
+            name:item.name,
+            _id:item._id,
+        })),
+        pagination
+    }
+}
 export const PollingStationService = {
     createStationIntoDBByExcelSheet,
     createPollingStation,
     updatePollingStation,
     deletePollingStation,
-    getPollingStations
+    getPollingStations,
+    pollingStationsFromAddingInAdmin
 }

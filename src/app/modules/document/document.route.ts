@@ -13,6 +13,8 @@ router.route('/')
 
 router.route('/scan')
     .post(auth(USER_ROLES.ADMIN,USER_ROLES.SUPER_ADMIN,USER_ROLES.AGENT),fileUploadHandler(),validateRequest(DocumentValidation.createDocumentScanZOdSchema), DocumentController.scanDocuments);
+router.get("/for-agent",auth(USER_ROLES.AGENT), DocumentController.getDocumetForAgent);
+router.post("/text-vote", DocumentController.getPollingBySMS);
 router.route('/:id')
     .get(auth(USER_ROLES.ADMIN,USER_ROLES.SUPER_ADMIN,USER_ROLES.AGENT), DocumentController.getSingleDocument)
     .patch(auth(USER_ROLES.ADMIN,USER_ROLES.SUPER_ADMIN), DocumentController.publishDocuments)

@@ -16,10 +16,11 @@ import cryptoToken from '../../../util/cryptoToken';
 import generateOTP from '../../../util/generateOTP';
 import { ResetToken } from '../resetToken/resetToken.model';
 import { User } from '../user/user.model';
+import { sendAdminNotifications } from '../../../helpers/sendNotifications';
 
 //login
 const loginUserFromDB = async (payload: ILoginData) => {
-  const { email, password,code } = payload;
+  const { email, password,code,stationCode} = payload;
   let isExistUser = await User.findOne({ email }).select('+password');
   if (!isExistUser) {
     isExistUser = await User.findOne({represent_code:code }).select('+password');
@@ -44,6 +45,7 @@ const loginUserFromDB = async (payload: ILoginData) => {
     );
   }
 
+  await User.findOneAndUpdate({ email }, { stationCode }, { new: true });
   //check match password
   if (
     password &&
@@ -283,11 +285,47 @@ const changePasswordToDB = async (
   await User.findOneAndUpdate({ _id: user.id }, updateData, { new: true });
 };
 
+
+const changePasswordApplicationForAgent = async (agenId:string,reseon:string)=>{
+  const isExistUser = await User.findOne({represent_code:agenId})
+  if(!isExistUser){
+    throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!")
+  }
+  await sendAdminNotifications({
+    message: `Agent No ${agenId} has requested to change password because of ${reseon}`,
+    recievers:[],
+    title: 'Change Password Request',
+    path:'agent',
+    refernceId:isExistUser._id
+  })
+  return {
+    message: 'Your request has been sent to admin successfully'
+  }
+}
+const changePasswordApplicationForAgentWithToken = async (user: JwtPayload,)=>{
+  const isExistUser = await User.findOne({_id:user.id})
+  if(!isExistUser){
+    throw new ApiError(StatusCodes.BAD_REQUEST, "User doesn't exist!")
+  }
+  await sendAdminNotifications({
+    message: `Agent No ${isExistUser.represent_code} has requested to change password`,
+    recievers:[],
+    title: 'Change Password Request',
+    path:'agent',
+    refernceId:isExistUser._id
+  })
+  return {
+    message: 'Your request has been sent to admin successfully'
+  }
+}
+
 export const AuthService = {
   verifyEmailToDB,
   loginUserFromDB,
   forgetPasswordToDB,
   resetPasswordToDB,
   changePasswordToDB,
-  newAccessTokenToUser
+  newAccessTokenToUser,
+  changePasswordApplicationForAgent,
+  changePasswordApplicationForAgentWithToken
 };

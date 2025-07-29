@@ -86,6 +86,8 @@ const agentsList = catchAsync(async (req: Request, res: Response) => {
 const updateAgentData = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const image = getSingleFilePath(req.files, 'image');
+  console.log(image);
+  
   const data = req.body;
   data.image = image;
   const result = await UserService.updateUserData(id, data);
@@ -141,6 +143,18 @@ const userData = catchAsync(async (req: Request, res: Response) => {
 
   });
 });
+
+const addStationInAdmins = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const body = req.body;
+  const result = await UserService.addStationInAdmins(id, body.stations);
+  sendResponse(res, {
+    success: true,
+    statusCode: StatusCodes.OK,
+    message: 'Station added successfully',
+    data: result,
+  });
+})
 export const UserController = {
   createUser,
   getUserProfile,
@@ -152,4 +166,5 @@ export const UserController = {
   deleteAdmin,
   changeAgentPassword,
   userData,
+  addStationInAdmins
 };

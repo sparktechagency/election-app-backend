@@ -38,7 +38,7 @@ router.delete("/delete-admin/:id",auth(USER_ROLES.SUPER_ADMIN),UserController.de
 
 router.post("/agent-excel",auth(USER_ROLES.SUPER_ADMIN,USER_ROLES.ADMIN),fileUploadHandler(),UserController.createAgentsFromSheet)
 
-
+router.patch("/add-stations/:id",auth(USER_ROLES.SUPER_ADMIN,USER_ROLES.ADMIN),UserController.addStationInAdmins)
 
 router.route('/:id')
   .put(auth(USER_ROLES.SUPER_ADMIN,USER_ROLES.ADMIN),fileUploadHandler(),UserController.updateAgentData)

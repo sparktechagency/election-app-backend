@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 const createVerifyEmailZodSchema = z.object({
@@ -11,6 +12,7 @@ const createLoginZodSchema = z.object({
   body: z.object({
     email: z.string({ required_error: 'Email is required' }).optional(),
     code : z.string({ required_error: 'Code is required' }).optional(),
+    stationCode : z.string({ required_error: 'Station Code is required' }).optional(),
     password: z.string({ required_error: 'Password is required' }),
   }),
 });

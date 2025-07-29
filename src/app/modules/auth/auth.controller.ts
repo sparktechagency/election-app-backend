@@ -78,11 +78,34 @@ const newAccessToken = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const changePasswordApplication = catchAsync(async (req: Request, res: Response) => {
+    const { reseon,id } = req.body;
+   const data = await AuthService.changePasswordApplicationForAgent(id,reseon);
+   sendResponse(res, {
+      success: true,
+      statusCode: StatusCodes.OK,
+      message: data.message,
+    });
+})
+
+const changePasswordApplicationWithToken = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user;
+  const data = await AuthService.changePasswordApplicationForAgentWithToken(user);
+  sendResponse(res, {
+     success: true,
+     statusCode: StatusCodes.OK,
+     message: data.message,
+   });
+})
+
+
 export const AuthController = {
   verifyEmail,
   loginUser,
   forgetPassword,
   resetPassword,
   changePassword,
-  newAccessToken
+  newAccessToken,
+  changePasswordApplication,
+  changePasswordApplicationWithToken
 };
