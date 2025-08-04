@@ -13,7 +13,7 @@ app.use(Morgan.errorHandler);
 
 //body parser
 app.use(cors({
-  origin:["http://10.10.7.95:3000","http://localhost:3000","http://10.10.7.95:3000","https://election-app-omega.vercel.app","https://year3000.binarybards.online"],
+  origin:["http://10.10.7.95:3000","http://localhost:3000","http://10.10.7.95:3000","https://election-app-omega.vercel.app","https://year3000.binarybards.online","http://13.51.169.31:3000"],
   credentials:true,
 }));
 app.use(express.json());
