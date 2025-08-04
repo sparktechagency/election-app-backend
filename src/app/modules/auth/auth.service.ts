@@ -20,8 +20,12 @@ import { sendAdminNotifications } from '../../../helpers/sendNotifications';
 
 //login
 const loginUserFromDB = async (payload: ILoginData) => {
+  console.log(payload);
+  
   const { email, password,code,stationCode} = payload;
   let isExistUser = await User.findOne({ email }).select('+password');
+  console.log(isExistUser);
+  
   if (!isExistUser) {
     isExistUser = await User.findOne({represent_code:code }).select('+password');
     if (!isExistUser) {
